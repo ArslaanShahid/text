@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Text Extractor</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/flowbite/1.8.1/flowbite.min.css" rel="stylesheet" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/flowbite/1.8.1/flowbite.min.js"></script>
+    <link rel="stylesheet" href="/static/app.css" />
+</head>
+<body class="dark:bg-gray-800">
+
+   <div class="w-full px-4 sm:px-0 sm:max-w-4xl sm:mx-auto my-10">
+
+
+
+            <div class="mb-6">
+                <label for="url" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Web URL</label>
+                <input placeholder="https://example.com/what-is-ai" type="text" id="url" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
+            </div>
+
+           <button onclick="onScrape()" id="scrapeBtn" type="button" class="disabled:opacity-50 w-full text-white bg-gradient-to-r from-blue-500 via-blue-600 to-blue-700 hover:bg-gradient-to-br focus:ring-4 focus:outline-none focus:ring-blue-300 dark:focus:ring-blue-800 font-medium rounded-lg text-sm px-5 py-2.5 text-center mr-2 mb-2">
+               Scrape
+           </button>
+
+
+
+       <div id="output" class="hidden my-5 w-full dark:text-white p-6 bg-white border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700">
+
+       </div>
+
+       <div id="copyBtn" class="hidden my-3 flex justify-end cursor-pointer" onclick="copyOutput()">
+           <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-copy dark:text-white"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+       </div>
+
+   </div>
+
+</body>
+
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/axios/1.5.0/axios.min.js" integrity="sha512-aoTNnqZcT8B4AmeCFmiSnDlc4Nj/KPaZyB5G7JnOnUEkdNpCZs1LCankiYi01sLTyWy+m2P+W4XM+BuQ3Q4/Dg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+
+<script>
+
+    const copyOutput = () => {
+
+         navigator.clipboard.writeText(output.innerText.replace(/\n{2,}/g, "\n\n"))
+            .then(() => {
+              console.log('Text copied to clipboard:', text);
+              // You can show a success message to the user here if needed
+            })
+            .catch(error => {
+              console.error('Error copying to clipboard:', error);
+              // You can show an error message to the user here if needed
+            });
+    }
+
+    const outputToggle = () => {
+       output.classList.toggle('hidden');
+       copyBtn.classList.toggle('hidden');
+    }
+
+    const onScrape = () => {
+
+         if(url.value === ""){
+             return alert('Please enter URL');
+         }
+
+         output.classList.add('hidden');
+         copyBtn.classList.add('hidden');
+
+         scrapeBtn.disabled = true;
+         scrapeBtn.innerText = "Scraping...";
+
+         axios.post("/api/scrape", {
+            url : url.value,
+         })
+         .then((e) => {
+             let cleanText = e.data.data.output;
+
+             // replacing \n with br for clean formatting
+             cleanText = cleanText.replace(/\n{2,}/g, "\n");
+             cleanText = cleanText.replace(/\n/g, "<br><br>");
+
+             output.innerHTML = cleanText;
+
+             outputToggle();
+         })
+         .catch((err) => {
+            alert(err.response.data.msg);
+         })
+         .finally((e) => {
+             scrapeBtn.disabled = false;
+             scrapeBtn.innerText = "Scrape";
+         });
+    }
+
+</script>
+</html>
